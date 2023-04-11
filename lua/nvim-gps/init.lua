@@ -130,10 +130,10 @@ local function setup_language_configs()
 	}
 end
 
-local data_cache_value = nil  -- table
-local location_cache_value = ""  -- string
-local data_prev_loc = {0, 0}
-local location_prev_loc = {0, 0}
+local data_cache_value = nil    -- table
+local location_cache_value = "" -- string
+local data_prev_loc = { 0, 0 }
+local location_prev_loc = { 0, 0 }
 local setup_complete = false
 
 local function default_transform(config, capture_name, capture_text)
@@ -149,7 +149,7 @@ local transform_lang = {
 		if capture_name == "multi-class-method" then
 			local temp = vim.split(capture_text, "%:%:")
 			local ret = {}
-			for i = 1, #temp-1  do
+			for i = 1, #temp - 1 do
 				local text = string.match(temp[i], "%s*([%w_]*)%s*<?.*>?%s*")
 				table.insert(ret, default_transform(config, "class-name", text))
 			end
@@ -158,11 +158,12 @@ local transform_lang = {
 		elseif capture_name == "multi-class-class" then
 			local temp = vim.split(capture_text, "%:%:")
 			local ret = {}
-			for i = 1, #temp-1  do
+			for i = 1, #temp - 1 do
 				local text = string.match(temp[i], "%s*([%w_]*)%s*<?.*>?%s*")
 				table.insert(ret, default_transform(config, "class-name", text))
 			end
-			table.insert(ret, default_transform(config, "class-name", string.match(temp[#temp], "%s*([%w_]*)%s*<?.*>?%s*")))
+			table.insert(ret,
+				default_transform(config, "class-name", string.match(temp[#temp], "%s*([%w_]*)%s*<?.*>?%s*")))
 			return ret
 		else
 			return default_transform(config, capture_name, capture_text)
@@ -175,24 +176,23 @@ local transform_lang = {
 			local ret = tag_name
 			local id_name = string.match(attributes, "id%s*=%s*%\"([^%s]+)%\"")
 			if id_name ~= nil then
-				ret = ret..'#'..id_name
+				ret = ret .. '#' .. id_name
 			else
 				local class_name = string.match(attributes, "class%s*=%s*%\"([%w-_%s]+)%\"")
 				if class_name ~= nil then
-					ret = ret..'.'..string.match(class_name, "(%w+)")
+					ret = ret .. '.' .. string.match(class_name, "(%w+)")
 				end
 			end
 			return default_transform(config, "tag-name", ret)
 		end
 	end,
 	["haskell"] = function(config, capture_name, capture_text)
-			if capture_name == "operator-name" then
-				return default_transform(config, "function-name", ("(" .. capture_text .. ")" ))
-			else
-				return default_transform(config, capture_name, capture_text)
-			end
+		if capture_name == "operator-name" then
+			return default_transform(config, "function-name", ("(" .. capture_text .. ")"))
+		else
+			return default_transform(config, capture_name, capture_text)
+		end
 	end,
-
 	["lua"] = function(config, capture_name, capture_text)
 		if capture_name == "string-method" then
 			return default_transform(config, "method-name", string.match(capture_text, "[\"\'](.*)[\"\']"))
@@ -206,7 +206,7 @@ local transform_lang = {
 		elseif capture_name == "table-function" then
 			local temp = vim.split(capture_text, "%.")
 			local ret = {}
-			for i = 1, #temp-1  do
+			for i = 1, #temp - 1 do
 				table.insert(ret, default_transform(config, "container-name", temp[i]))
 			end
 			table.insert(ret, default_transform(config, "function-name", temp[#temp]))
@@ -340,7 +340,11 @@ function M.get_data()
 		local text = ""
 
 		if vim.fn.has("nvim-0.7") > 0 then
-			text = vim.treesitter.query.get_node_text(capture_node, 0)
+			if vim.fn.has("nvim-0.9") > 0 then
+				text = vim.treesitter.get_node_text(capture_node, 0)
+			else
+				text = vim.treesitter.query.get_node_text(capture_node, 0)
+			end
 			if text == nil then
 				return data_cache_value
 			end
@@ -367,15 +371,12 @@ function M.get_data()
 
 		if capture_node == node then
 			if gps_query.captures[capture_ID] == "scope-root" then
-
 				while capture_node == node do
 					capture_ID, capture_node = iter()
 				end
 				local capture_name = gps_query.captures[capture_ID]
 				add_node_data(1, capture_name, capture_node)
-
 			elseif gps_query.captures[capture_ID] == "scope-root-2" then
-
 				capture_ID, capture_node = iter()
 				local capture_name = gps_query.captures[capture_ID]
 				add_node_data(1, capture_name, capture_node)
@@ -383,7 +384,6 @@ function M.get_data()
 				capture_ID, capture_node = iter()
 				capture_name = gps_query.captures[capture_ID]
 				add_node_data(2, capture_name, capture_node)
-
 			end
 		end
 
@@ -439,14 +439,14 @@ function M.get_location(opts)
 	local context = {}
 	for _, v in pairs(data) do
 		if not disable_icons then
-			table.insert(context, v.icon..v.text)
+			table.insert(context, v.icon .. v.text)
 		else
 			table.insert(context, v.text)
 		end
 	end
 
 	if depth ~= 0 and #context > depth then
-		context = vim.list_slice(context, #context-depth+1, #context)
+		context = vim.list_slice(context, #context - depth + 1, #context)
 		table.insert(context, 1, depth_limit_indicator)
 	end
 
